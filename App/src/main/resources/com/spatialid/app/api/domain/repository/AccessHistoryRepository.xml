@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- © 2025 NTT DATA Japan Co., Ltd. & NTT InfraNet All Rights Reserved. -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spatialid.app.api.domain.repository.AccessHistoryRepository">
+
+    <resultMap id="apiIdMap" type="string">
+        <id column="api_id" />
+    </resultMap>
+    
+    <select id="selectApiId" parameterType="string" resultMap="apiIdMap">
+        select
+            api_id
+        from
+            api_mst
+        where
+            uri = #{requestUri}
+    </select>
+    
+    <insert id="upsertAccessHistory" parameterType="com.spatialid.app.api.domain.entity.UpsAccessHistoryEntity">
+        insert into
+            axs_history(
+                api_id,
+                servicer_id,
+                access_date,
+                request, 
+                update_time
+            )
+            values(
+                #{apiId},
+                #{servicerId},
+                #{accessDate, typeHandler=com.spatialid.app.common.convert.StrToTimestampWithMiliTypeHandler},
+                #{request, typeHandler=com.spatialid.app.common.convert.JsonNodeTypeHandler}::jsonb,
+                #{updateTime, typeHandler=com.spatialid.app.common.convert.StrToTimestampTypeHandler}
+            )
+        on conflict(api_id, servicer_id, access_date)
+            do update set
+                http_status=#{httpStatus},
+                error_detail=#{errorDetail},
+                update_time=#{updateTime, typeHandler=com.spatialid.app.common.convert.StrToTimestampTypeHandler}
+    </insert>
+    
+    <resultMap id="selectAccessHistory" type="com.spatialid.app.api.domain.entity.GetAccessHistoryEntity">
+        <id property="apiId" column="api_id" />
+        <id property="servicerId" column="servicer_id" />
+        <id property="accessDate" column="access_date" typeHandler="com.spatialid.app.common.convert.StrToTimestampWithMiliTypeHandler" />
+        <result property="request" column="request" typeHandler="com.spatialid.app.common.convert.JsonNodeTypeHandler" />
+        <result property="errorDetail" column="error_detail" />
+        <result property="httpStatus" column="http_status" />
+    </resultMap>
+    
+    <select id="selectAccessHistory"
+        parameterType="com.spatialid.app.api.presentation.dto.GetAccessHistoryRequestDto"
+        resultMap="selectAccessHistory">
+        select
+            api_id,
+            servicer_id,
+            access_date,
+            request,
+            error_detail,
+            http_status
+        from
+            axs_history
+        where
+            <trim prefixOverrides="and">
+                <if test="apiId != null">
+                    api_id = #{apiId}
+                </if>
+                <if test="servicerId != null">
+                    and
+                    servicer_id = #{servicerId}
+                </if>
+                <if test="historyReferenceDateFrom != null">
+                    and
+                    access_date <![CDATA[>=]]> #{historyReferenceDateFrom, typeHandler=com.spatialid.app.common.convert.StrToTimestampTypeHandler}
+                </if>
+                <if test="historyReferenceDateTo != null">
+                    and
+                    access_date <![CDATA[<=]]> #{historyReferenceDateTo, typeHandler=com.spatialid.app.common.convert.StrToTimestampTypeHandler}
+                </if>
+                <if test="httpStatus != null">
+                    and
+                    http_status = #{httpStatus}
+                </if>
+            </trim>
+        order by
+            access_date desc,
+            servicer_id asc,
+            api_id asc
+    </select>
+</mapper>

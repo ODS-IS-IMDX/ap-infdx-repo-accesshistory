@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- © 2025 NTT DATA Japan Co., Ltd. & NTT InfraNet All Rights Reserved. -->
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+  <typeHandlers>
+    <typeHandler handler="com.spatialid.app.common.convert.JsonNodeTypeHandler" javaType="com.fasterxml.jackson.databind.JsonNode" jdbcType="OTHER" />
+    <typeHandler handler="com.spatialid.app.common.convert.StrToTimestampTypeHandler" javaType="java.lang.String" jdbcType="TIMESTAMP" />
+    <typeHandler handler="com.spatialid.app.common.convert.StrToTimestampWithMiliTypeHandler" javaType="java.lang.String" jdbcType="TIMESTAMP" />
+  </typeHandlers>
+</configuration>
